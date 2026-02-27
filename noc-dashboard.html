@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CINEMECCANICA NOC</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --bg2: #0a0f1a;
+    --panel: #0d1526;
+    --panel2: #111d35;
+    --accent: #00d4ff;
+    --accent2: #0077ff;
+    --green: #00ff88;
+    --red: #ff3355;
+    --orange: #ff8c00;
+    --yellow: #ffd700;
+    --text: #c8d8f0;
+    --text2: #6a8aaa;
+    --border: rgba(0,212,255,0.15);
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* SCANLINES */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* =========== HEADER =========== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(6,8,16,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    position: relative;
+  }
+
+  .logo-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .logo-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .logo-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* =========== VPN BUTTON =========== */
+  .vpn-widget {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: default;
+  }
+
+  .vpn-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    transition: all 0.4s;
+    flex-shrink: 0;
+  }
+
+  .vpn-status-dot.connected {
+    background: var(--green);
+    box-shadow: 0 0 12px var(--green);
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .vpn-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+
+  .vpn-state {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--red);
+    transition: color 0.4s;
+    min-width: 70px;
+  }
+
+  .vpn-state.connected { color: var(--green); }
+
+  .btn-vpn {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2px;
+    padding: 7px 18px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-vpn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.2);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-vpn:hover::before { opacity: 1; }
+  .btn-vpn:active { transform: scale(0.97); }
+
+  .btn-vpn.disconnect {
+    background: linear-gradient(135deg, #cc0022, var(--red));
+    color: #fff;
+  }
+
+  /* =========== ZABBIX BUTTON =========== */
+  .btn-zabbix {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: var(--accent);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: all 0.25s;
+  }
+
+  .btn-zabbix:hover {
+    background: var(--panel2);
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+    color: #fff;
+  }
+
+  .btn-zabbix svg { width: 16px; height: 16px; }
+
+  /* =========== MAIN =========== */
+  main {
+    position: relative;
+    z-index: 1;
+    padding: 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* =========== PAGE TITLE =========== */
+  .page-header {
+    margin-bottom: 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .page-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #fff;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .page-title span {
+    color: var(--accent);
+  }
+
+  .page-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    margin-top: 6px;
+  }
+
+  /* =========== STATS ROW =========== */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.orange { color: var(--orange); }
+
+  /* =========== CINEMA GRID =========== */
+  .cinemas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+    gap: 24px;
+  }
+
+  .cinema-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease both;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .cinema-card:hover {
+    border-color: rgba(0,212,255,0.4);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), var(--glow);
+  }
+
+  .cinema-header {
+    background: var(--panel2);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cinema-header:hover { background: rgba(17,29,53,0.9); }
+
+  .cinema-name-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cinema-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .cinema-icon svg { width: 18px; height: 18px; fill: #000; }
+
+  .cinema-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    color: #fff;
+    text-transform: uppercase;
+  }
+
+  .cinema-location {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .cinema-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .badge.ok { border-color: rgba(0,255,136,0.4); color: var(--green); }
+  .badge.err { border-color: rgba(255,51,85,0.4); color: var(--red); }
+
+  .chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--text2);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+  }
+
+  .cinema-card.collapsed .chevron { transform: rotate(-90deg); }
+
+  /* =========== DEVICES TABLE =========== */
+  .devices-table {
+    padding: 0;
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .cinema-card.collapsed .devices-table {
+    max-height: 0;
+  }
+
+  .device-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+
+  .device-row:last-child { border-bottom: none; }
+  .device-row:hover { background: rgba(0,212,255,0.04); }
+
+  .device-name {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .device-type {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+
+  .device-type.projector { color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+  .device-type.server { color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+  .device-type.icmp { color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+
+  .device-ip {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .device-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .device-status.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .device-status.err { background: var(--red); box-shadow: 0 0 6px var(--red); animation: blink 1.5s infinite; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .device-link {
+    text-decoration: none;
+    display: contents;
+    color: inherit;
+  }
+
+  .device-link-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    text-decoration: none;
+    padding: 3px 8px;
+    border: 1px solid rgba(0,119,255,0.3);
+    border-radius: 3px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  .device-link-btn:hover {
+    background: rgba(0,119,255,0.15);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+
+  /* =========== VPN INFO PANEL =========== */
+  .vpn-info {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vpn-info::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,212,255,0.05), transparent 60%);
+    pointer-events: none;
+  }
+
+  .vpn-info-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(0,119,255,0.2), rgba(0,212,255,0.2));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .vpn-info-icon svg { width: 24px; height: 24px; color: var(--accent); }
+
+  .vpn-info-details { }
+
+  .vpn-info-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .vpn-info-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .vpn-info-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .vpn-info-item span {
+    color: var(--accent);
+    margin-left: 6px;
+  }
+
+  .vpn-big-status {
+    text-align: right;
+  }
+
+  .vpn-big-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .vpn-big-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 2px;
+    transition: color 0.4s;
+  }
+
+  .vpn-big-value.connected { color: var(--green); }
+
+  /* =========== ANIMATIONS =========== */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* stagger */
+  .cinema-card:nth-child(1) { animation-delay: 0.05s; }
+  .cinema-card:nth-child(2) { animation-delay: 0.10s; }
+  .cinema-card:nth-child(3) { animation-delay: 0.15s; }
+  .cinema-card:nth-child(4) { animation-delay: 0.20s; }
+  .cinema-card:nth-child(5) { animation-delay: 0.25s; }
+  .cinema-card:nth-child(6) { animation-delay: 0.30s; }
+  .cinema-card:nth-child(7) { animation-delay: 0.35s; }
+
+  .stat-card:nth-child(1) { animation-delay: 0.0s; }
+  .stat-card:nth-child(2) { animation-delay: 0.07s; }
+  .stat-card:nth-child(3) { animation-delay: 0.14s; }
+  .stat-card:nth-child(4) { animation-delay: 0.21s; }
+
+  /* =========== NOTIFICATION =========== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.3s;
+    pointer-events: none;
+    max-width: 320px;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .toast .toast-title {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  /* =========== LOADING =========== */
+  .loader {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,212,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* =========== CORNER DECORATIONS =========== */
+  .corner-tl, .corner-br {
+    position: fixed;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .corner-tl { top: 70px; left: 0; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+  .corner-br { bottom: 0; right: 0; border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent); }
+
+  /* =========== RESPONSIVE =========== */
+  @media (max-width: 900px) {
+    main { padding: 16px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .cinemas-grid { grid-template-columns: 1fr; }
+    header { padding: 0 16px; }
+  }
+
+  @media (max-width: 600px) {
+    .vpn-info { grid-template-columns: 1fr; }
+    .vpn-info-row { flex-direction: column; gap: 4px; }
+    .logo-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 36 36" fill="none">
+        <rect x="2" y="2" width="32" height="32" rx="4" stroke="#00d4ff" stroke-width="1.5"/>
+        <circle cx="18" cy="18" r="8" stroke="#00d4ff" stroke-width="1.5"/>
+        <circle cx="18" cy="18" r="3" fill="#00d4ff"/>
+        <line x1="18" y1="2" x2="18" y2="10" stroke="#00d4ff" stroke-width="1.5"/>
+        <line x1="18" y1="26" x2="18" y2="34" stroke="#00d4ff" stroke-width="1.5"/>
+        <line x1="2" y1="18" x2="10" y2="18" stroke="#00d4ff" stroke-width="1.5"/>
+        <line x1="26" y1="18" x2="34" y2="18" stroke="#00d4ff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">Cinemeccanica</div>
+      <div class="logo-sub">NOC DASHBOARD v7.0</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- ZABBIX LINK -->
+    <a class="btn-zabbix" href="http://162.19.84.22/zabbix.php?name=&ip=&dns=&port=&status=-1&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&maintenance_status=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=name&sortorder=ASC&show_suppressed=0&action=host.view" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+        <circle cx="12" cy="10" r="2"/>
+        <path d="M7 10h2M15 10h2"/>
+      </svg>
+      Zabbix
+    </a>
+
+    <!-- VPN WIDGET -->
+    <div class="vpn-widget">
+      <div class="vpn-status-dot" id="vpnDot"></div>
+      <div>
+        <div class="vpn-label">WIREGUARD VPN</div>
+        <div class="vpn-state" id="vpnState">DISCONNESSO</div>
+      </div>
+    </div>
+
+    <button class="btn-vpn" id="btnVpn" onclick="toggleVPN()">CONNETTI</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- VPN INFO PANEL -->
+  <div class="vpn-info">
+    <div class="vpn-info-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+    </div>
+    <div class="vpn-info-details">
+      <div class="vpn-info-title">WireGuard — Cinemeccanica NOC</div>
+      <div class="vpn-info-row">
+        <div class="vpn-info-item">ENDPOINT <span>91.187.215.2:13001</span></div>
+        <div class="vpn-info-item">INDIRIZZO <span>172.31.1.20/24</span></div>
+        <div class="vpn-info-item">DNS <span>8.8.8.8</span></div>
+        <div class="vpn-info-item">MTU <span>1412</span></div>
+        <div class="vpn-info-item">PORTA LISTEN <span>51820</span></div>
+      </div>
+    </div>
+    <div class="vpn-big-status">
+      <div class="vpn-big-label">Stato VPN</div>
+      <div class="vpn-big-value" id="vpnBigValue">OFFLINE</div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-label">Cinema Totali</div>
+      <div class="stat-value" id="statCinemas">7</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dispositivi Totali</div>
+      <div class="stat-value" id="statDevices">47</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Online (SNMP ✓)</div>
+      <div class="stat-value green" id="statOnline">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Offline (SNMP ✗)</div>
+      <div class="stat-value red" id="statOffline">—</div>
+    </div>
+  </div>
+
+  <!-- CINEMAS -->
+  <div class="cinemas-grid" id="cinemasGrid">
+    <!-- populated by JS -->
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toastTitle"></div>
+  <div id="toastMsg"></div>
+</div>
+
+<script>
+// =====================================================
+// DATA — estratto dalla pagina Zabbix
+// =====================================================
+const ZABBIX_BASE = 'http://162.19.84.22';
+
+const DEVICES = [
+  // Aurelia Antica - Grosseto
+  { cinema:'Aurelia Antica', location:'Grosseto', name:'Sala 1 – Proiettore e ICMP', ip:'10.57.91.12', type:'projector', online:true,  hostid:11193 },
+  { cinema:'Aurelia Antica', location:'Grosseto', name:'Sala 2 – Proiettore e ICMP', ip:'10.57.91.22', type:'projector', online:true,  hostid:11194 },
+  { cinema:'Aurelia Antica', location:'Grosseto', name:'Sala 3 – Proiettore e ICMP', ip:'10.57.91.32', type:'projector', online:true,  hostid:11195 },
+  { cinema:'Aurelia Antica', location:'Grosseto', name:'Sala 4 – Proiettore e ICMP', ip:'10.57.91.42', type:'projector', online:true,  hostid:11196 },
+
+  // Clev Village - Chiusi
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 01 – Proiettore',  ip:'10.56.70.12', type:'projector', online:false, hostid:11228 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 01 – Server',      ip:'10.56.70.10', type:'server',    online:false, hostid:11234 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 02 – Proiettore',  ip:'10.56.70.22', type:'projector', online:true,  hostid:11229 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 02 – Server',      ip:'10.56.70.20', type:'server',    online:false, hostid:11235 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 03 – Proiettore',  ip:'10.56.70.32', type:'projector', online:true,  hostid:11230 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 03 – Server',      ip:'10.56.70.30', type:'server',    online:true,  hostid:11236 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 04 – Proiettore',  ip:'10.56.70.42', type:'projector', online:true,  hostid:11231 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 04 – Server',      ip:'10.56.70.40', type:'server',    online:true,  hostid:11237 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 05 – Proiettore',  ip:'10.56.70.52', type:'projector', online:true,  hostid:11232 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 05 – Server',      ip:'10.56.70.50', type:'server',    online:true,  hostid:11238 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 06 – Proiettore',  ip:'10.56.70.62', type:'projector', online:true,  hostid:11233 },
+  { cinema:'Clev Village',  location:'Chiusi (SI)', name:'Screen 06 – Server',      ip:'10.56.70.60', type:'server',    online:true,  hostid:11239 },
+
+  // Imperiale - Montecatini Terme
+  { cinema:'Imperiale',     location:'Montecatini Terme', name:'Sala 1 – Proiettore',           ip:'10.57.97.12', type:'projector', online:false, hostid:11289 },
+  { cinema:'Imperiale',     location:'Montecatini Terme', name:'Sala 1 – Server IMS3000',       ip:'10.57.97.10', type:'server',    online:false, hostid:11293 },
+  { cinema:'Imperiale',     location:'Montecatini Terme', name:'Sala 2 – Proiettore',           ip:'10.57.97.22', type:'projector', online:false, hostid:11290 },
+  { cinema:'Imperiale',     location:'Montecatini Terme', name:'Sala 2 – Server IMS3000',       ip:'10.57.97.20', type:'server',    online:false, hostid:11294 },
+  { cinema:'Imperiale',     location:'Montecatini Terme', name:'Sala 3 – Proiettore e Server',  ip:'10.57.97.32', type:'projector', online:true,  hostid:11291 },
+  { cinema:'Imperiale',     location:'Montecatini Terme', name:'Sala 4 – Proiettore e Server',  ip:'10.57.97.42', type:'projector', online:false, hostid:11292 },
+
+  // Isola Verde - Pisa
+  { cinema:'Isola Verde',   location:'Pisa', name:'Screen 01 – Proiettore',  ip:'10.58.70.12', type:'projector', online:true,  hostid:11254 },
+  { cinema:'Isola Verde',   location:'Pisa', name:'Screen 01 – Server',      ip:'10.58.70.10', type:'server',    online:true,  hostid:11255 },
+  { cinema:'Isola Verde',   location:'Pisa', name:'Screen 02 – Proiettore',  ip:'10.58.70.22', type:'projector', online:true,  hostid:11256 },
+  { cinema:'Isola Verde',   location:'Pisa', name:'Screen 02 – Server',      ip:'10.58.70.20', type:'server',    online:true,  hostid:11257 },
+  { cinema:'Isola Verde',   location:'Pisa', name:'Screen 03 – Proiettore',  ip:'10.58.70.32', type:'projector', online:true,  hostid:11258 },
+  { cinema:'Isola Verde',   location:'Pisa', name:'Screen 03 – Server',      ip:'10.58.70.30', type:'server',    online:true,  hostid:11259 },
+
+  // Multisala Odeon - Pisa
+  { cinema:'Multisala Odeon', location:'Pisa', name:'Sala 1 Venezia – Proiettore',    ip:'10.55.76.12', type:'projector', online:true,  hostid:11051 },
+  { cinema:'Multisala Odeon', location:'Pisa', name:'Sala 2 Amalfi – Proiettore',     ip:'10.55.76.22', type:'projector', online:true,  hostid:11052 },
+  { cinema:'Multisala Odeon', location:'Pisa', name:'Sala 3 Pisa – Proiettore',       ip:'10.55.76.32', type:'projector', online:true,  hostid:11053 },
+  { cinema:'Multisala Odeon', location:'Pisa', name:'Sala 3 Pisa – Server IMS3000',   ip:'10.55.76.33', type:'server',    online:true,  hostid:11056 },
+  { cinema:'Multisala Odeon', location:'Pisa', name:'Sala 4 Genova – Proiettore',     ip:'10.55.76.42', type:'projector', online:true,  hostid:11054 },
+  { cinema:'Multisala Odeon', location:'Pisa', name:'Sala 5 Kinzica – Proiettore',    ip:'10.55.76.52', type:'projector', online:true,  hostid:11055 },
+
+  // Nuova Aurora - San Sepolcro
+  { cinema:'Nuova Aurora',  location:'Sansepolcro', name:'Sala 1 – Proiettore Barco',  ip:'10.58.78.12', type:'projector', online:true,  hostid:11288 },
+  { cinema:'Nuova Aurora',  location:'Sansepolcro', name:'Sala 1 – Server Doremi',     ip:'10.58.78.10', type:'server',    online:true,  hostid:11287 },
+
+  // Splendor - Massa
+  { cinema:'Splendor',      location:'Massa', name:'Screen 01 – Proiettore',  ip:'10.58.71.12', type:'projector', online:false, hostid:11240 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 01 – Server',      ip:'10.58.71.10', type:'server',    online:false, hostid:11247 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 02 – Proiettore',  ip:'10.58.71.22', type:'projector', online:false, hostid:11241 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 03 – Server',      ip:'10.58.71.30', type:'server',    online:false, hostid:11249 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 04 – Proiettore',  ip:'10.58.71.42', type:'projector', online:false, hostid:11243 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 05 – Proiettore',  ip:'10.58.71.52', type:'projector', online:false, hostid:11244 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 05 – Server',      ip:'10.58.71.50', type:'server',    online:false, hostid:11251 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 06 – Proiettore',  ip:'10.58.71.62', type:'projector', online:false, hostid:11245 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 06 – Server',      ip:'10.58.71.60', type:'server',    online:false, hostid:11252 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 07 – Proiettore',  ip:'10.58.71.72', type:'projector', online:false, hostid:11246 },
+  { cinema:'Splendor',      location:'Massa', name:'Screen 07 – Server',      ip:'10.58.71.70', type:'server',    online:false, hostid:11253 },
+];
+
+// =====================================================
+// VPN STATE
+// =====================================================
+let vpnConnected = false;
+
+function toggleVPN() {
+  vpnConnected = !vpnConnected;
+  updateVPNUI();
+  showToast(
+    vpnConnected ? 'VPN CONNESSA' : 'VPN DISCONNESSA',
+    vpnConnected
+      ? 'Tunnel WireGuard attivo su 172.31.1.20/24 → 91.187.215.2:13001'
+      : 'Connessione WireGuard terminata.'
+  );
+}
+
+function updateVPNUI() {
+  const dot   = document.getElementById('vpnDot');
+  const state = document.getElementById('vpnState');
+  const big   = document.getElementById('vpnBigValue');
+  const btn   = document.getElementById('btnVpn');
+
+  if (vpnConnected) {
+    dot.classList.add('connected');
+    state.textContent = 'CONNESSO';
+    state.classList.add('connected');
+    big.textContent = 'ONLINE';
+    big.classList.add('connected');
+    btn.textContent = 'DISCONNETTI';
+    btn.classList.add('disconnect');
+  } else {
+    dot.classList.remove('connected');
+    state.textContent = 'DISCONNESSO';
+    state.classList.remove('connected');
+    big.textContent = 'OFFLINE';
+    big.classList.remove('connected');
+    btn.textContent = 'CONNETTI';
+    btn.classList.remove('disconnect');
+  }
+}
+
+// =====================================================
+// TOAST
+// =====================================================
+let toastTimer = null;
+function showToast(title, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// =====================================================
+// BUILD CINEMA CARDS
+// =====================================================
+function buildDashboard() {
+  const grid = document.getElementById('cinemasGrid');
+  grid.innerHTML = '';
+
+  // Group by cinema
+  const cinemaMap = {};
+  for (const d of DEVICES) {
+    if (!cinemaMap[d.cinema]) cinemaMap[d.cinema] = { location: d.location, devices: [] };
+    cinemaMap[d.cinema].devices.push(d);
+  }
+
+  let totalOnline = 0, totalOffline = 0;
+
+  for (const [cinemaName, data] of Object.entries(cinemaMap)) {
+    const onlineCount  = data.devices.filter(d => d.online).length;
+    const offlineCount = data.devices.length - onlineCount;
+    totalOnline  += onlineCount;
+    totalOffline += offlineCount;
+
+    const card = document.createElement('div');
+    card.className = 'cinema-card';
+    card.dataset.cinema = cinemaName;
+
+    const deviceRows = data.devices.map(d => {
+      const latestUrl   = `${ZABBIX_BASE}/zabbix.php?action=latest.view&hostids%5B0%5D=${d.hostid}&filter_set=1`;
+      const problemsUrl = `${ZABBIX_BASE}/zabbix.php?action=problem.view&hostids%5B0%5D=${d.hostid}&filter_set=1`;
+      const typeLabel   = d.type === 'projector' ? 'PROIETTORE' : d.type === 'server' ? 'SERVER' : 'ICMP';
+      return `
+        <div class="device-row">
+          <div class="device-name">${d.name}</div>
+          <span class="device-type ${d.type}">${typeLabel}</span>
+          <span class="device-ip">${d.ip}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="device-status ${d.online ? 'ok' : 'err'}"></div>
+            <a class="device-link-btn" href="${latestUrl}" target="_blank">DATI</a>
+            <a class="device-link-btn" href="${problemsUrl}" target="_blank" style="color:#ff8c00;border-color:rgba(255,140,0,0.3)">LOG</a>
+          </div>
+        </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="cinema-header" onclick="toggleCard(this)">
+        <div class="cinema-name-block">
+          <div class="cinema-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 4v10h12V7H6zm2 2h3v6H8V9zm5 0h3v6h-3V9z"/></svg>
+          </div>
+          <div>
+            <div class="cinema-name">${cinemaName}</div>
+            <div class="cinema-location">📍 ${data.location}</div>
+          </div>
+        </div>
+        <div class="cinema-meta">
+          <span class="badge ok">✓ ${onlineCount} online</span>
+          ${offlineCount > 0 ? `<span class="badge err">✗ ${offlineCount} offline</span>` : ''}
+          <span class="badge">${data.devices.length} dev</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </div>
+      <div class="devices-table">
+        ${deviceRows}
+      </div>`;
+
+    grid.appendChild(card);
+  }
+
+  document.getElementById('statOnline').textContent  = totalOnline;
+  document.getElementById('statOffline').textContent = totalOffline;
+  document.getElementById('statCinemas').textContent = Object.keys(cinemaMap).length;
+  document.getElementById('statDevices').textContent = DEVICES.length;
+}
+
+function toggleCard(header) {
+  const card = header.closest('.cinema-card');
+  card.classList.toggle('collapsed');
+}
+
+// =====================================================
+// INIT
+// =====================================================
+buildDashboard();
+</script>
+</body>
+</html>
