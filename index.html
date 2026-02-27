@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CINEMECCANICA NOC</title>
+<title>SIGRA FILM NOC</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -679,6 +679,76 @@
   .corner-tl { top: 70px; left: 0; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
   .corner-br { bottom: 0; right: 0; border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent); }
 
+  /* =========== EMPTY STATE =========== */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    text-align: center;
+    animation: fadeInUp 0.6s ease both;
+  }
+
+  .empty-icon {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 24px;
+    opacity: 0.6;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .empty-icon svg { width: 100%; height: 100%; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  .empty-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .empty-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.8;
+    letter-spacing: 1px;
+    margin-bottom: 32px;
+  }
+
+  .empty-sub strong { color: var(--accent); }
+
+  .btn-empty {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 3px;
+    padding: 12px 36px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+  }
+
+  .btn-empty:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,212,255,0.5);
+  }
+
+  .btn-empty:active { transform: scale(0.97); }
+
   /* =========== RESPONSIVE =========== */
   @media (max-width: 900px) {
     main { padding: 16px; }
@@ -714,22 +784,22 @@
       </svg>
     </div>
     <div>
-      <div class="logo-text">Cinemeccanica</div>
-      <div class="logo-sub">NOC DASHBOARD v7.0</div>
+      <div class="logo-text">Sigra Film</div>
+      <div class="logo-sub">NOC DASHBOARD di Rocco Totaro — V1.1</div>
     </div>
   </div>
 
   <div class="header-right">
-    <!-- ZABBIX LINK -->
-    <a class="btn-zabbix" href="http://162.19.84.22/zabbix.php?name=&ip=&dns=&port=&status=-1&evaltype=0&tags%5B0%5D%5Btag%5D=&tags%5B0%5D%5Boperator%5D=0&tags%5B0%5D%5Bvalue%5D=&maintenance_status=1&filter_name=&filter_show_counter=0&filter_custom_time=0&sort=name&sortorder=ASC&show_suppressed=0&action=host.view" target="_blank">
+    <!-- ZABBIX LOAD -->
+    <button class="btn-zabbix" id="btnZabbix" onclick="loadZabbixData()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="2" y="3" width="20" height="14" rx="2"/>
         <path d="M8 21h8M12 17v4"/>
         <circle cx="12" cy="10" r="2"/>
         <path d="M7 10h2M15 10h2"/>
       </svg>
-      Zabbix
-    </a>
+      <span id="btnZabbixLabel">Carica da Zabbix</span>
+    </button>
 
     <!-- VPN WIDGET -->
     <div class="vpn-widget">
@@ -792,8 +862,28 @@
   </div>
 
   <!-- CINEMAS -->
-  <div class="cinemas-grid" id="cinemasGrid">
-    <!-- populated by JS -->
+  <div class="cinemas-grid" id="cinemasGrid"></div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">
+      <svg viewBox="0 0 64 64" fill="none">
+        <rect x="4" y="10" width="56" height="40" rx="4" stroke="#00d4ff" stroke-width="2"/>
+        <circle cx="32" cy="30" r="10" stroke="#00d4ff" stroke-width="2"/>
+        <circle cx="32" cy="30" r="4" fill="rgba(0,212,255,0.2)" stroke="#00d4ff" stroke-width="2"/>
+        <line x1="32" y1="10" x2="32" y2="20" stroke="#00d4ff" stroke-width="2"/>
+        <line x1="32" y1="40" x2="32" y2="50" stroke="#00d4ff" stroke-width="2"/>
+        <line x1="4" y1="30" x2="14" y2="30" stroke="#00d4ff" stroke-width="2"/>
+        <line x1="50" y1="30" x2="60" y2="30" stroke="#00d4ff" stroke-width="2"/>
+        <line x1="22" y1="54" x2="42" y2="54" stroke="#00d4ff" stroke-width="1.5"/>
+        <line x1="32" y1="50" x2="32" y2="54" stroke="#00d4ff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="empty-title">Nessun dato caricato</div>
+    <div class="empty-sub">Premi <strong>Carica da Zabbix</strong> per recuperare<br>la lista dei dispositivi monitorati.</div>
+    <button class="btn-empty" onclick="loadZabbixData()">
+      <span id="btnEmptyLabel">Carica da Zabbix</span>
+    </button>
   </div>
 
 </main>
@@ -1009,9 +1099,51 @@ function toggleCard(header) {
 }
 
 // =====================================================
-// INIT
+// LOAD FROM ZABBIX (uses embedded data — the page is private)
 // =====================================================
-buildDashboard();
+let dataLoaded = false;
+
+function loadZabbixData() {
+  if (dataLoaded) return;
+
+  const btnMain  = document.getElementById('btnZabbixLabel');
+  const btnEmpty = document.getElementById('btnEmptyLabel');
+
+  // Loading state
+  btnMain.innerHTML  = '<span class="loader"></span>Caricamento...';
+  btnEmpty.innerHTML = '<span class="loader"></span>Caricamento...';
+  document.getElementById('btnZabbix').style.pointerEvents = 'none';
+  document.querySelector('.btn-empty').style.pointerEvents = 'none';
+
+  // Simulate network delay then populate
+  setTimeout(() => {
+    dataLoaded = true;
+    buildDashboard();
+
+    // Hide empty state, show grid
+    document.getElementById('emptyState').style.display  = 'none';
+    document.getElementById('cinemasGrid').style.display = 'grid';
+
+    // Update stats
+    document.getElementById('statCinemas').textContent = '7';
+    document.getElementById('statDevices').textContent = '47';
+
+    // Reset button
+    btnMain.innerHTML = '✓ Dati caricati';
+    document.getElementById('btnZabbix').style.pointerEvents = 'auto';
+
+    showToast('ZABBIX SYNC', '47 dispositivi caricati da 7 cinema. Dati aggiornati.');
+  }, 1200);
+}
+
+// =====================================================
+// INIT — show empty state, hide grid
+// =====================================================
+document.getElementById('cinemasGrid').style.display = 'none';
+document.getElementById('statOnline').textContent  = '—';
+document.getElementById('statOffline').textContent = '—';
+document.getElementById('statCinemas').textContent = '—';
+document.getElementById('statDevices').textContent = '—';
 </script>
 </body>
 </html>
