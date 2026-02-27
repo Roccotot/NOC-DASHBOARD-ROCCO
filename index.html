@@ -946,14 +946,14 @@
       </div>
     </div>
 
-    <button class="btn-vpn" id="btnVpn" onclick="toggleVPN()">CONNETTI</button>
+    <button class="btn-vpn" id="btnVpn" onclick="toggleVPN()">VERIFICA</button>
   </div>
 </header>
 
 <!-- MAIN -->
 <main>
 
-  <!-- VPN CONFIG PANEL -->
+  <!-- VPN INFO PANEL — configurazione fissa -->
   <div class="vpn-info" id="vpnInfoPanel">
     <div class="vpn-info-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -961,48 +961,23 @@
         <path d="M9 12l2 2 4-4"/>
       </svg>
     </div>
-    <div class="vpn-info-details" id="vpnInfoDetails">
-      <div class="vpn-info-title" id="vpnInfoTitle">Nessuna configurazione caricata</div>
-      <div class="vpn-info-row" id="vpnInfoRow">
-        <div class="vpn-info-item" style="color:var(--text2)">Carica un file <strong style="color:var(--accent)">.conf</strong> WireGuard oppure incollane il contenuto →</div>
+    <div class="vpn-info-details">
+      <div class="vpn-info-title">WireGuard — Sigra Film NOC</div>
+      <div class="vpn-info-row">
+        <div class="vpn-info-item">ENDPOINT <span>91.187.215.2:13001</span></div>
+        <div class="vpn-info-item">INDIRIZZO <span>172.31.1.20/24</span></div>
+        <div class="vpn-info-item">DNS <span>8.8.8.8</span></div>
+        <div class="vpn-info-item">MTU <span>1412</span></div>
+        <div class="vpn-info-item">LISTEN <span>51820</span></div>
+        <div class="vpn-info-item">PEER KEY <span>677LTbWPy…</span></div>
       </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-      <!-- File picker -->
-      <label class="btn-conf-load" title="Carica file .conf">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        Carica .conf
-        <input type="file" accept=".conf" id="confFileInput" style="display:none" onchange="loadConfFile(event)">
-      </label>
-      <!-- Paste toggle -->
-      <button class="btn-conf-paste" onclick="togglePasteArea()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
-          <rect x="9" y="2" width="6" height="4" rx="1"/>
-          <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/>
-        </svg>
-        Incolla conf
-      </button>
     </div>
     <div class="vpn-big-status">
       <div class="vpn-big-label">Stato VPN</div>
-      <div class="vpn-big-value" id="vpnBigValue">OFFLINE</div>
-    </div>
-  </div>
-
-  <!-- PASTE AREA (hidden by default) -->
-  <div class="paste-area-wrapper" id="pasteAreaWrapper" style="display:none">
-    <div class="paste-area-header">
-      <span>Incolla qui il contenuto del file <strong>.conf</strong> WireGuard</span>
-      <button onclick="togglePasteArea()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;line-height:1">✕</button>
-    </div>
-    <textarea id="pasteArea" class="conf-textarea" placeholder="[Interface]&#10;PrivateKey = ...&#10;Address = ...&#10;&#10;[Peer]&#10;PublicKey = ...&#10;Endpoint = ...&#10;AllowedIPs = ..." spellcheck="false"></textarea>
-    <div style="display:flex;justify-content:flex-end;gap:10px;padding:12px 16px;border-top:1px solid var(--border)">
-      <button class="btn-conf-cancel" onclick="togglePasteArea()">Annulla</button>
-      <button class="btn-conf-apply" onclick="applyPastedConf()">Applica configurazione</button>
+      <div class="vpn-big-value" id="vpnBigValue">
+        <span class="loader" style="width:16px;height:16px;border-width:2px"></span>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);margin-top:6px" id="vpnCheckMsg">Verifica in corso...</div>
     </div>
   </div>
 
@@ -1129,171 +1104,95 @@ const DEVICES = [
 ];
 
 // =====================================================
-// WIREGUARD CONF PARSER
+// VPN — CONFIGURAZIONE FISSA + RILEVAMENTO AUTOMATICO
 // =====================================================
-let wgConfig = null;
 
-function parseWGConf(text) {
-  const cfg = { interface: {}, peers: [] };
-  let section = null;
-  let currentPeer = null;
+// IP interni della rete VPN da testare (prova a raggiungerli)
+// Se almeno uno risponde → VPN attiva
+const VPN_PROBE_IPS = [
+  'http://10.57.91.12',   // Aurelia Antica Sala1 proiettore
+  'http://10.56.70.30',   // Clev Village Screen03 server
+  'http://10.55.76.12',   // Odeon Sala1
+];
+const VPN_PROBE_TIMEOUT = 3000; // ms
 
-  for (let raw of text.split('\n')) {
-    const line = raw.trim();
-    if (!line || line.startsWith('#')) continue;
-
-    if (line === '[Interface]') {
-      section = 'interface';
-      currentPeer = null;
-      continue;
-    }
-    if (line === '[Peer]') {
-      section = 'peer';
-      currentPeer = {};
-      cfg.peers.push(currentPeer);
-      continue;
-    }
-
-    const eq = line.indexOf('=');
-    if (eq === -1) continue;
-    const key   = line.slice(0, eq).trim();
-    const value = line.slice(eq + 1).trim();
-
-    if (section === 'interface') {
-      cfg.interface[key] = value;
-    } else if (section === 'peer' && currentPeer) {
-      currentPeer[key] = value;
-    }
-  }
-  return cfg;
-}
-
-function applyWGConfig(cfg) {
-  wgConfig = cfg;
-  const iface = cfg.interface;
-  const peer  = cfg.peers[0] || {};
-
-  // Build display name from Address or fallback
-  const addr     = iface.Address || '—';
-  const endpoint = peer.Endpoint  || '—';
-  const dns      = iface.DNS       || '—';
-  const mtu      = iface.MTU       || '—';
-  const port     = iface.ListenPort|| '—';
-  const pubkey   = peer.PublicKey  ? peer.PublicKey.slice(0,12)+'…' : '—';
-  const allowed  = peer.AllowedIPs || '—';
-
-  document.getElementById('vpnInfoTitle').textContent = `WireGuard — ${addr}`;
-  document.getElementById('vpnInfoRow').innerHTML = `
-    <div class="vpn-info-item">ENDPOINT <span>${endpoint}</span></div>
-    <div class="vpn-info-item">INDIRIZZO <span>${addr}</span></div>
-    ${dns  !== '—' ? `<div class="vpn-info-item">DNS <span>${dns}</span></div>` : ''}
-    ${mtu  !== '—' ? `<div class="vpn-info-item">MTU <span>${mtu}</span></div>` : ''}
-    ${port !== '—' ? `<div class="vpn-info-item">LISTEN <span>${port}</span></div>` : ''}
-    <div class="vpn-info-item">PEER KEY <span>${pubkey}</span></div>
-    <div class="vpn-info-item">ALLOWED <span>${allowed}</span></div>
-  `;
-  document.getElementById('vpnInfoPanel').classList.add('conf-loaded');
-
-  // Reset VPN state
-  vpnConnected = false;
-  updateVPNUI();
-
-  showToast('CONFIGURAZIONE CARICATA', `WireGuard: ${addr} → ${endpoint}`);
-}
-
-function loadConfFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const cfg = parseWGConf(e.target.result);
-    applyWGConfig(cfg);
-  };
-  reader.readAsText(file);
-  // Reset input so same file can be re-loaded
-  event.target.value = '';
-}
-
-function togglePasteArea() {
-  const el = document.getElementById('pasteAreaWrapper');
-  const visible = el.style.display !== 'none';
-  el.style.display = visible ? 'none' : 'block';
-  if (!visible) {
-    setTimeout(() => document.getElementById('pasteArea').focus(), 50);
-  }
-}
-
-function applyPastedConf() {
-  const text = document.getElementById('pasteArea').value.trim();
-  if (!text) {
-    showToast('ERRORE', 'Nessun contenuto da applicare.');
-    return;
-  }
-  const cfg = parseWGConf(text);
-  applyWGConfig(cfg);
-  document.getElementById('pasteAreaWrapper').style.display = 'none';
-}
-
-// Pre-load the existing config from the document
-(function preloadConf() {
-  const defaultConf = `[Interface]
-PrivateKey = IPlcsosfCSBp9KlIt1AR2RakJ5Tpusx4d7zKo0gf2kQ=
-ListenPort = 51820
-Address = 172.31.1.20/24
-DNS = 8.8.8.8
-MTU = 1412
-[Peer]
-PublicKey = 677LTbWPy/7VJdtjez8YsR9TxiuXuLOdnqy601aJvys=
-AllowedIPs = 0.0.0.0/0, ::/0
-Endpoint = 91.187.215.2:13001`;
-  const cfg = parseWGConf(defaultConf);
-  applyWGConfig(cfg);
-  // Pre-fill textarea for reference
-  document.getElementById('pasteArea').value = defaultConf;
-})();
-
-// =====================================================
-// VPN STATE
-// =====================================================
 let vpnConnected = false;
+let vpnAutoChecking = false;
 
-function toggleVPN() {
-  vpnConnected = !vpnConnected;
-  updateVPNUI();
-  const addr     = wgConfig?.interface?.Address  || '?';
-  const endpoint = wgConfig?.peers?.[0]?.Endpoint || '?';
-  showToast(
-    vpnConnected ? 'VPN CONNESSA' : 'VPN DISCONNESSA',
-    vpnConnected
-      ? `Tunnel WireGuard attivo: ${addr} → ${endpoint}`
-      : 'Connessione WireGuard terminata.'
-  );
+// Tenta un fetch con timeout verso un IP interno.
+// Se risponde (anche con errore HTTP) → la rete VPN è raggiungibile.
+function probeIP(url, timeout) {
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => { controller.abort(); resolve(false); }, timeout);
+    fetch(url, { signal: controller.signal, mode: 'no-cors', cache: 'no-store' })
+      .then(() => { clearTimeout(timer); resolve(true); })
+      .catch(() => { clearTimeout(timer); resolve(false); });
+  });
 }
 
-function updateVPNUI() {
-  const dot   = document.getElementById('vpnDot');
-  const state = document.getElementById('vpnState');
-  const big   = document.getElementById('vpnBigValue');
-  const btn   = document.getElementById('btnVpn');
+async function checkVPNStatus() {
+  if (vpnAutoChecking) return;
+  vpnAutoChecking = true;
 
-  if (vpnConnected) {
+  const big     = document.getElementById('vpnBigValue');
+  const msg     = document.getElementById('vpnCheckMsg');
+  const dot     = document.getElementById('vpnDot');
+  const state   = document.getElementById('vpnState');
+  const btn     = document.getElementById('btnVpn');
+
+  big.innerHTML = '<span class="loader" style="width:16px;height:16px;border-width:2px"></span>';
+  msg.textContent = 'Verifica connessione...';
+
+  // Prova tutti gli IP in parallelo
+  const results = await Promise.all(VPN_PROBE_IPS.map(ip => probeIP(ip, VPN_PROBE_TIMEOUT)));
+  const reachable = results.some(r => r === true);
+
+  vpnConnected = reachable;
+  vpnAutoChecking = false;
+
+  // Aggiorna UI
+  if (reachable) {
+    big.textContent = 'ONLINE';
+    big.className = 'vpn-big-value connected';
+    msg.textContent = 'Rete VPN raggiungibile ✓';
     dot.classList.add('connected');
     state.textContent = 'CONNESSO';
     state.classList.add('connected');
-    big.textContent = 'ONLINE';
-    big.classList.add('connected');
-    btn.textContent = 'DISCONNETTI';
-    btn.classList.add('disconnect');
+    btn.textContent = 'VERIFICA';
+    btn.classList.remove('disconnect');
+    document.getElementById('vpnInfoPanel').style.borderColor = 'rgba(0,255,136,0.3)';
   } else {
+    big.textContent = 'OFFLINE';
+    big.className = 'vpn-big-value';
+    msg.textContent = 'Rete VPN non raggiungibile ✗';
     dot.classList.remove('connected');
     state.textContent = 'DISCONNESSO';
     state.classList.remove('connected');
-    big.textContent = 'OFFLINE';
-    big.classList.remove('connected');
-    btn.textContent = 'CONNETTI';
+    btn.textContent = 'VERIFICA';
     btn.classList.remove('disconnect');
+    document.getElementById('vpnInfoPanel').style.borderColor = 'rgba(255,51,85,0.3)';
   }
+
+  showToast(
+    reachable ? 'VPN ATTIVA' : 'VPN NON RILEVATA',
+    reachable
+      ? 'Rete interna raggiungibile. Tunnel WireGuard attivo.'
+      : 'Nessun host interno risponde. Controlla WireGuard.'
+  );
 }
+
+// Il bottone CONNETTI/DISCONNETTI ora fa solo la verifica automatica
+function toggleVPN() {
+  checkVPNStatus();
+}
+
+function updateVPNUI() {} // mantenuta per compatibilità
+
+// Verifica automatica all'avvio dopo 1s
+setTimeout(checkVPNStatus, 1000);
+// Ri-verifica ogni 30 secondi
+setInterval(checkVPNStatus, 30000);
 
 // =====================================================
 // TOAST
